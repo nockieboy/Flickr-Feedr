@@ -1,6 +1,8 @@
 var url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=";
 var nameURL = "https://api.flickr.com/services/rest/?method=flickr.people.getInfo&api_key=";
-var url_mid = "&tags=mountains&per_page=50&page=";
+var searchTag = "mountains";
+var url_mid = "&tags="
+var url_mid2 = "&per_page=50&page=";
 var url_last = "&format=json&jsoncallback=?";
 var apiKey = "ef61aea8f1d3fcdcda5e0294f0f7fea2";
 var currentPage = 1;
@@ -8,7 +10,7 @@ var totalPages = 0;
 
 function GetImages(pageNum)
 {
-	$.getJSON(url + apiKey + url_mid + pageNum.toString() + url_last, function(data) {
+	$.getJSON(url + apiKey + url_mid + searchTag + url_mid2 + pageNum.toString() + url_last, function(data) {
 		totalPages = data.photos.pages;
 	    $.each(data.photos.photo, function(i, item) {
 	        var photoURL = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_" + item.secret + "_m.jpg";
@@ -35,7 +37,19 @@ function GetUsername(userID)
 }
 
 $(document).ready(function() {
-  GetImages(1);
+
+	GetImages(1);
+
+	$("#search").click(function() {
+				Search($("#searchinput").val());
+	});
+
+	$("#searchinput").keyup(function (e) {
+	    if (e.keyCode == 13) {
+	        Search($("#searchinput").val());
+	    }
+	});
+
 });
 
 $(document).on("mouseenter", "div.image-container", function() {
@@ -45,6 +59,14 @@ $(document).on("mouseenter", "div.image-container", function() {
 $(document).on("mouseleave", "div.image-container", function() {
     $(this).children("div").attr("class", "image-info");
 });
+
+function Search(searchParameter) {
+	if (searchParameter != "") {
+		searchTag = searchParameter;
+		$('#image-container').empty();
+		GetImages(1);
+	}
+}
 
 function element_in_scroll(elem)
 {
