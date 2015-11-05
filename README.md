@@ -14,4 +14,4 @@ To do:
 
 * Possibly reformat title/author display under the images (pending feedback)
 * Add in floating search box so user can search by any keyword or name
-* Use nodeJS or backbone to provide the necessary functionality for more complex features as required
+* Use a framework like angularJS or backbone to provide the necessary functionality for more complex features as required
