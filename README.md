@@ -2,16 +2,17 @@
 
 Simple single-page application to pull an image feed from Flickr's API and display it in a browser.
 
-Currently, the feed is:
+It has been updated to utilise backbone and a little jQuery.
 
-* Implemented using jQuery for simplicity
-* Based on a fixed search term - 'mountains'
+Currently, the feed:
+
+* Uses a backbone model and view to present the photos
+* Has a user-defineable search
 * Produces an 'infinite scrolling' output
 * Displays image title & author when the user hovers their mouse over the image in question
 * Title and author are hyperlinks to relevant locations in Flickr
 
 To do:
 
-* Possibly reformat title/author display under the images (pending feedback)
 * Add in floating search box so user can search by any keyword or name
-* Use a framework like angularJS or backbone to provide the necessary functionality for more complex features as required
+* Display tags for the images
