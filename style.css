@@ -93,3 +93,16 @@ span.author {
     clear: both;
     visibility: hidden;
 }
+
+#toTop{
+	position: fixed;
+	bottom: 40px;
+	right: 40px;
+	cursor: pointer;
+	display: none;
+  box-shadow: 7px 7px 5px #101010;
+}
+
+#toTop .fa {
+  margin-right: 5px;
+}
