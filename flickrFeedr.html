@@ -14,7 +14,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.3/backbone-min.js"></script>
   <!-- Template -->
   <script type="text/template" id="image-template">
-      <div class="image-container" style="background: url(<%- url %>);">
+      <!-- <div class="image-container" style="background: url(<%- url %>);"> -->
+      <div class="image-container" style="background: url(<%- url %>), url('ajax-loader.gif'); background-repeat: no-repeat; background-position: center">
       <div class="image-info"><p class="top"><a class="title" href="http://www.flickr.com/photos/<%- author_id %>/<%- id %>">
       <%- title %></a> <span class="author">by <a class="authref" href="http://flickr.com/photos/<%- author_id %>"><%- author %>
       </a></span></p></div></div>
