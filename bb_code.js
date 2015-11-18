@@ -5,6 +5,7 @@ var app = {};  // Create namespace for the app
 //
 var url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=";
 var nameURL = "https://api.flickr.com/services/rest/?method=flickr.people.getInfo&api_key=";
+var photoInfoURL = "https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=";
 var searchTag = "mountains";
 var url_mid = "&tags="
 var url_mid2 = "&per_page=50&page=";
@@ -13,10 +14,10 @@ var apiKey = "ef61aea8f1d3fcdcda5e0294f0f7fea2";
 var currentPage = 1;
 var totalPages = 0;
 var isLoading = false; // flag to ensure only one more page is loaded when reaching bottom of screen
-// ------------
-// Model
-// ------------
 
+// ------------
+// Photo Model
+// ------------
 app.Photo = Backbone.Model.extend({
   defaults: {
     title: '',
@@ -24,13 +25,18 @@ app.Photo = Backbone.Model.extend({
     id: '',
     author: 'Loading...',
     author_id: '',
-    author_url: ''
+    author_url: '',
+    tags: [ ]
   },
   getAuthorName: function() {
-    app.GetUsername(this.get('author_id'), this);
+    app.GetPhotoInfo(this.get('id'), '', this);
   },
-  showResult: function(result) {
-    this.set({author: result});
+  // Add a tag to this image - note the clone workaround to
+  // ensure events are fired when a new tag is added
+  addTag: function (tag) {
+    var newTags = _.clone(this.get('tags'));
+    newTags.push(tag);
+    this.set('tags', newTags);
   }
 });
 
@@ -66,7 +72,6 @@ app.FeedView = Backbone.View.extend({
 // from the flickr API and creates a new Photo model for each entry
 app.GetImages = function(pageNum)
 {
-  console.log("GetImages called.");
 	$.getJSON(url + apiKey + url_mid + searchTag + url_mid2 + pageNum.toString() + url_last, function(data) {
 		totalPages = data.photos.pages;
 	  $.each(data.photos.photo, function(i, item) {
@@ -76,7 +81,6 @@ app.GetImages = function(pageNum)
         imageEntry.getAuthorName();
         app.feedView.addOne(imageEntry);
 	  });
-    console.log("GetImages completed.");
     isLoading = false;
 	});
 }
@@ -133,24 +137,43 @@ $(document).scroll(function(e){
 });
 
 $(document).on("mouseenter", "div.image-container", function() {
-    $(this).children("div").attr("class", "image-info-active");
+    $(this).children("div.image-info").attr("class", "image-info-active");
 });
 
 $(document).on("mouseleave", "div.image-container", function() {
-    $(this).children("div").attr("class", "image-info");
+    $(this).children("div.image-info-active").attr("class", "image-info");
 });
 
-// Interrogate the flickr API to get a username from a userID
-app.GetUsername = function(userID, caller)
+// Interrogate the flickr API to get photo information, including username and tags...
+app.GetPhotoInfo = function(photo_ID, secret, caller)
 {
-	$.getJSON(nameURL + apiKey + "&user_id=" + userID + url_last, function(returndata) {
-    if (typeof returndata.person.realname !== 'undefined') {
-		  var utext = (returndata.person.realname._content != "") ? utext = returndata.person.realname._content : utext = userID;
-      caller.showResult(utext);
+  var photoInfURL = '';
+  if (secret !== '') {
+    photoInfURL = photoInfoURL + apiKey + "&photo_id=" + photo_ID + "&secret=" + secret + url_last;
+  } else {
+    photoInfURL = photoInfoURL + apiKey + "&photo_id=" + photo_ID + url_last;
+  }
+	$.getJSON(photoInfURL, function(returndata) {
+    if (typeof returndata.photo !== 'undefined') {
+		  var utext = (returndata.photo.owner.username != "") ? utext = returndata.photo.owner.username : utext = 'Unknown';
+      app.RecursiveGetProperty(returndata, 'raw', caller);
+      caller.set({author: utext});
     }
 	});
 }
 
+app.RecursiveGetProperty = function(obj, lookup, callback) {
+    for (property in obj) {
+        if (property == lookup) {
+            callback.addTag(obj[property]);
+        } else if (obj[property] instanceof Object) {
+            app.RecursiveGetProperty(obj[property], lookup, callback);
+        }
+    }
+}
+
+// Create a 'back to top' button and only make it visible
+// when scrolling away from the top of the document
 $('body').append('<div id="toTop" class="btn btn-info"><span class="glyphicon glyphicon-home"></span>&nbsp;&nbsp;Back to Top</div>');
 $(window).scroll(function () {
   if ($(this).scrollTop() != 0) {
@@ -160,6 +183,7 @@ $(window).scroll(function () {
 	}
 });
 
+// Animate scroll back to top of document on button clicked
 $('#toTop').click(function(){
   $("html, body").animate({ scrollTop: 0 }, 600);
   return false;

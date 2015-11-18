@@ -41,7 +41,18 @@ h1 {
 .image-info-active {
     height: 180px;
     width: 240px;
-    background: rgba(255, 255, 255, .45);
+    background: rgba(255, 255, 255, .75);
+    z-index: 1;
+}
+
+li {
+  display: inline-block;
+  font-size: xx-small;
+  position: relative;
+  top: -10px;
+  left: -30px;
+  padding: 0px;
+  margin-left: 0px;
 }
 
 a {
