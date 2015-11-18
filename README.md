@@ -10,8 +10,8 @@ Currently, the feed:
 * Has a user-defineable search
 * Produces an 'infinite scrolling' output
 * Displays image title, author & image tags when the user hovers their mouse over the image in question
-* Title and author are hyperlinks to relevant locations in Flickr
+* Title and author are hyperlinks to relevant locations in Flickr, tags are clickable and result in a search on that tag
 
 To do:
 
-* Make tags list clickable to search on selected tag
+* All done!

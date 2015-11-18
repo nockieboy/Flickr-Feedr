@@ -105,6 +105,10 @@ span.author {
     visibility: hidden;
 }
 
+li {
+  cursor: pointer;
+}
+
 #toTop{
 	position: fixed;
 	bottom: 40px;

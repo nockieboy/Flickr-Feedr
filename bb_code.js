@@ -53,6 +53,16 @@ app.PhotoView = Backbone.View.extend({
     // model and trigger a re-render to update the DOM with the author name
     this.listenTo(this.model, 'change', this.render);
   },
+  events: {
+        "click li": "clicked"
+  },
+  clicked: function(e){
+        e.preventDefault();
+        var searchTerm = e.currentTarget.innerHTML;
+        commalessTerm = searchTerm.substr(0, searchTerm.length - 1);
+        $("#searchinput").val(commalessTerm);
+        app.Search(commalessTerm);
+  },
   render: function() {
     this.$el.html(this.template(this.model.toJSON()));
     return this; // enable chained calls
@@ -187,4 +197,8 @@ $(window).scroll(function () {
 $('#toTop').click(function(){
   $("html, body").animate({ scrollTop: 0 }, 600);
   return false;
+});
+
+$("ul").on("click", "li", function() {
+  console.log('li.click: ' +$(this).text());
 });
