@@ -87,13 +87,21 @@ app.GetImages = function(pageNum)
 	  $.each(data.photos.photo, function(i, item) {
 	      var photoURL = "http://farm" + item.farm + ".static.flickr.com/" + item.server + "/" + item.id + "_" + item.secret + "_m.jpg";
         var authURL = "http://flickr.com/photos/" + item.owner;
-        var imageEntry = new app.Photo({title: item.title, url: photoURL, id: item.id, author: item.owner, author_id: item.owner, author_url: authURL});
+        // If the image has no title, set it to 'Untitled'
+        var imageTitle = (item.title != "") ? imageTitle = item.title : imageTitle = 'Untitled';
+        var imageEntry = new app.Photo({title: imageTitle, url: photoURL, id: item.id, author: item.owner, author_id: item.owner, author_url: authURL});
         imageEntry.getAuthorName();
         app.feedView.addOne(imageEntry);
 	  });
     isLoading = false;
 	});
 }
+
+// ------------
+// Initializers
+// ------------
+app.feedView = new app.FeedView();    // Instantiate a view for the collection
+app.GetImages(currentPage);           // Fill the collection with the initial search results
 
 // Handle the input of a new search parameter and update
 // the feed accordingly
@@ -104,24 +112,6 @@ app.Search = function(searchParameter) {
 		app.GetImages(1);
 	}
 }
-
-// ------------
-// Initializers
-// ------------
-app.feedView = new app.FeedView();    // Instantiate a view for the collection
-app.GetImages(currentPage);           // Fill the collection with the initial search results
-
-// User has clicked the search button
-$("#search").click(function() {
-  app.Search($("#searchinput").val());
-});
-
-// User has pressed Enter in the search box
-$("#searchinput").keyup(function (e) {
-  if (e.keyCode == 13) {
-    app.Search($("#searchinput").val());
-  }
-});
 
 // Returns true if docView has almost reached bottom of page
 // (and top of page isn't visible)
@@ -134,25 +124,6 @@ app.element_in_scroll = function(elem)
 
     return ((elemBottom - 1000 <= docViewBottom) && (elemTop >= docViewTop));
 }
-
-// If scrolling, check to see if more images need to be loaded
-$(document).scroll(function(e){
-   	if (!isLoading && app.element_in_scroll("#image-container .image-container:last")) {
-        if (currentPage < totalPages) {
-          isLoading = true;
-        	currentPage += 1;
-        	app.GetImages(currentPage);
-    	}
-    }
-});
-
-$(document).on("mouseenter", "div.image-container", function() {
-    $(this).children("div.image-info").attr("class", "image-info-active");
-});
-
-$(document).on("mouseleave", "div.image-container", function() {
-    $(this).children("div.image-info-active").attr("class", "image-info");
-});
 
 // Interrogate the flickr API to get photo information, including username and tags...
 app.GetPhotoInfo = function(photo_ID, secret, caller)
@@ -172,6 +143,8 @@ app.GetPhotoInfo = function(photo_ID, secret, caller)
 	});
 }
 
+// Navigate the returned photo data to find tags
+// (Couldn't find a way to get them directly!) :(
 app.RecursiveGetProperty = function(obj, lookup, callback) {
     for (property in obj) {
         if (property == lookup) {
@@ -181,6 +154,43 @@ app.RecursiveGetProperty = function(obj, lookup, callback) {
         }
     }
 }
+
+// -----------------------
+//  jQuery code follows
+// -----------------------
+
+// User has clicked the search button
+$("#search").click(function() {
+  app.Search($("#searchinput").val());
+});
+
+// User has pressed Enter in the search box
+$("#searchinput").keyup(function (e) {
+  if (e.keyCode == 13) {
+    app.Search($("#searchinput").val());
+  }
+});
+
+// If scrolling, check to see if more images need to be loaded
+$(document).scroll(function(e){
+   	if (!isLoading && app.element_in_scroll("#image-container .image-container:last")) {
+        if (currentPage < totalPages) {
+          isLoading = true;
+        	currentPage += 1;
+        	app.GetImages(currentPage);
+    	}
+    }
+});
+
+// Display the image information when the user mouses over the image
+$(document).on("mouseenter", "div.image-container", function() {
+    $(this).children("div.image-info").attr("class", "image-info-active");
+});
+
+// Hide the information when the mouse leaves the image
+$(document).on("mouseleave", "div.image-container", function() {
+    $(this).children("div.image-info-active").attr("class", "image-info");
+});
 
 // Create a 'back to top' button and only make it visible
 // when scrolling away from the top of the document
@@ -197,8 +207,4 @@ $(window).scroll(function () {
 $('#toTop').click(function(){
   $("html, body").animate({ scrollTop: 0 }, 600);
   return false;
-});
-
-$("ul").on("click", "li", function() {
-  console.log('li.click: ' +$(this).text());
 });
