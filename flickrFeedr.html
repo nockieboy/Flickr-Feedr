@@ -21,7 +21,7 @@
             <p>Tags:</p>
             <ul id="taglist">
               <% for(var tag in tags) { %>
-                <li><%= tags[tag] %>,</li>
+                <li><%= tags[tag].raw %>,</li>
               <% } %>
             </ul>
           </p>
@@ -37,7 +37,7 @@
   <div id="flickrFeedApp">
     <div class="searchbox">
       <div class="form-group" align="center">
-        <h3><input type="text" placeholder="mountains" id="searchinput">
+        <h3><input type="text" value="mountains" id="searchinput">
           <button class="btn btn-success" id="search">
             <span class="glyphicon glyphicon-search"></span> Search
           </button>
