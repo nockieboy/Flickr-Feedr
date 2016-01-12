@@ -15,7 +15,7 @@
   <!-- Template -->
   <script type="text/template" id="image-template">
       <div class="image-container" style="background: url(<%- url %>), url('ajax-loader.gif'); background-repeat: no-repeat; background-position: center">
-        <div class="image-info"><span class="0">
+        <div class="image-info">
           <p class="top"><a class="title" href="http://www.flickr.com/photos/<%- author_id %>/<%- id %>"><%- title %></a>
             <span class="author">by <a class="authref" href="http://flickr.com/photos/<%- author_id %>"><%- author %></a></span>
             <p>Tags:</p>
@@ -25,7 +25,6 @@
               <% } %>
             </ul>
           </p>
-        </span>
         </div>
       </div>
   </script>
