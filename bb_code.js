@@ -3,18 +3,27 @@ var app = {}; // Create namespace for the app
 //
 // Required variables for URL construction & API access
 //
-var url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=";
-var nameURL = "https://api.flickr.com/services/rest/?method=flickr.people.getInfo&api_key=";
-var photoInfoURL = "https://api.flickr.com/services/rest/?method=flickr.photos.getInfo&api_key=";
+var apiKey = "ef61aea8f1d3fcdcda5e0294f0f7fea2";
+var init_url = "https://api.flickr.com/services/rest/?";
+var url = init_url + "method=flickr.photos.search&api_key=";
+var nameURL = init_url + "method=flickr.people.getInfo&api_key=";
 var searchTag = "mountains";
 var url_mid = "&tags="
 var url_mid2 = "&per_page=50&page=";
 var url_last = "&format=json&jsoncallback=?";
-var apiKey = "ef61aea8f1d3fcdcda5e0294f0f7fea2";
 var currentPage = 1;
 var totalPages = 0;
 var isLoading = false; // flag to ensure only one more page is loaded when reaching bottom of screen
+var baseUrl = 'https://api.flickr.com/services/rest/?';
 
+var params = {
+  method: 'method',
+  api_key: apiKey,
+  searchTag: "mountains",
+  per_page: '50',
+  format: 'json',
+  jsoncallback: '?'
+};
 
 // ------------
 // Photo Model
@@ -48,14 +57,18 @@ app.Photo = Backbone.Model.extend({
   },
   getAuthorName: function() {
     var self = this;
-    var photo_ID = this.get('id');
-    var secret = this.get('secret');
-    var photoInfURL = '';
-    if (secret !== '') {
-      photoInfURL = photoInfoURL + apiKey + "&photo_id=" + photo_ID + "&secret=" + secret + url_last;
-    } else {
-      photoInfURL = photoInfoURL + apiKey + "&photo_id=" + photo_ID + url_last;
-    }
+    // Using jQuery's param command to demonstrate I know more than string concatenation! :D
+    var photoInfURL = init_url;
+    var photoInfoArgs = {
+      method:'flickr.photos.getInfo',
+      api_key:apiKey,
+      photo_id:this.get('id'),
+      secret:this.get('secret')//,
+      //format: 'json',
+      //jsoncallback: "?"
+    };
+    photoInfURL += $.param(photoInfoArgs) + url_last;
+    //alert(photoInfURL);
     $.getJSON(photoInfURL, function(returndata) {
       if (typeof returndata.photo !== 'undefined') {
         var utext = (returndata.photo.owner.username != "") ? utext = returndata.photo.owner.username : utext = 'Unknown';
@@ -76,11 +89,7 @@ app.Photo = Backbone.Model.extend({
 app.Photos = Backbone.Collection.extend({
   model: app.Photo,
   url: function () {
-    var searchTag = $('#searchinput').val();
-    if (searchTag === '') {
-      searchTag = 'mountains';
-    }
-    return url + apiKey + url_mid + searchTag + url_mid2 + this.page.toString() + url_last;
+    return url + apiKey + url_mid + this.searchTag + url_mid2 + this.page.toString() + url_last;
   },
   parse: function(data) {
     return data.photos.photo;
@@ -94,7 +103,7 @@ app.Photos = Backbone.Collection.extend({
 // Views
 // ------------
 
-// This view sets up events and shows an individual photo
+// This view renders an individual photo
 app.PhotoView = Backbone.View.extend({
   tagName: 'div',
   template: _.template($('#image-template').html()),
@@ -104,8 +113,21 @@ app.PhotoView = Backbone.View.extend({
     this.listenTo(this.model, 'change', this.render);
   },
   events: {
-    "click li": "clicked"
+    "click li": "clicked",
+    //"mouseenter": "showInfo",
+    //"mouseleave": "hideInfo"
+  },/*
+  showInfo: function(e) {
+    //console.log("Entered " + e.delegateTarget + " el = " + this.el);
+    if (e.delegateTarget === this.el) {
+      console.log("Entered " + e.delegateTarget + " el = " + this.el);
+    //  $(this.el).children("div.image-info").attr("class", "image-info-active");
+    }
   },
+  hideInfo: function(e) {
+    console.log("Exited");
+    $(this.el).children("div.image-info-active").attr("class", "image-info");
+  },*/
   clicked: function(e) {
     e.preventDefault();
     var searchTerm = e.currentTarget.innerHTML;
@@ -118,11 +140,13 @@ app.PhotoView = Backbone.View.extend({
   }
 });
 
+// This is a collection to hold existing PhotoViews so they
+// can be later removed when a new search is started
 app.PhotoViews = Backbone.Collection.extend({
   model: app.PhotoView
 });
 
-// renders a photo to the DOM
+// Renders a photo to the DOM
 app.FeedView = Backbone.View.extend({
   el: '#flickrFeedApp',
   initialize: function() {
@@ -136,6 +160,7 @@ app.FeedView = Backbone.View.extend({
   },
   loadPhotos: function() {
     this.photos.isLoading = false;
+    isLoading = false;
     var addOne = _.bind(this.addPhoto, this);
     this.photos.forEach(addOne);
   },
@@ -144,22 +169,34 @@ app.FeedView = Backbone.View.extend({
       model: photo,
       el: '#image-container'
     });
-    // Keep a record of this PhotoView for later clearing
+    // Keep a record of this PhotoView in the photoViews collection for later clearing
     this.photoViews.add(this.pView);
   },
   clearAll: function() {
+    // Clear out the photoViews collection of PhotoViews ready
+    // for new ones to be added as the result of a new search
     this.photoViews.each(function(item) {
+      item.undelegateEvents();
+      item.$el.removeData().unbind();
       item.remove();
     });
   },
   search: function (searchTerm) {
+    // Clear existing PhotoViews
     this.clearAll();
+    // Set the new search term
     this.photos.searchTag = searchTerm;
+    // Prevent repeated searches being started before the first
+    // one is able to populate the DOM
     this.photos.isLoading = true;
+    // Get the new photos
     this.photos.fetch();
   },
   scroll: function() {
     if (!this.photos.isLoading && app.element_in_scroll("#image-container .image-container:last")) {
+      // Hit the bottom of the page, start a search and prevent
+      // repeated triggering of this function until the search
+      // is returned and the DOM populated further
       this.photos.isLoading = true;
       this.photos.page += 1;
       this.photos.fetch();
@@ -176,7 +213,10 @@ app.feedView = new app.FeedView(); // Instantiate a view for the collection
 // the feed accordingly
 app.Search = function(searchParameter) {
   if (searchParameter != "") {
+    searchTag = searchParameter;
     $('#image-container').empty();
+    if (isLoading) { return; }
+    isLoading = true;
     app.feedView.search(searchParameter);
   }
 }
@@ -218,7 +258,11 @@ $("#searchinput").keyup(function(e) {
   }
 });
 
-// Display the image information when the user mouses over the image
+// Display the image information when the user mouses over the image.
+// This jQuery code attaches an event to every div.image-container to
+// detect mouse events. It is currently simpler than adding events
+// directly to the PhotoView model as I'm not aware of a simple way to
+// allow each PhotoView to detect a mouse event on its own DOM element
 $(document).on("mouseenter", "div.image-container", function() {
   $(this).children("div.image-info").attr("class", "image-info-active");
 });
