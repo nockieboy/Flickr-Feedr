@@ -1,5 +1,6 @@
 var app = {}; // Create namespace for the app
 
+// I know this is all a bit messy, but it's my first attempt (ever) at Backbone
 //
 // Required variables for URL construction & API access
 //
@@ -115,11 +116,9 @@ app.PhotoView = Backbone.View.extend({
     "mouseleave": "hideInfo"
   },
   showInfo: function(e) {
-    console.log("Entered ", this.model.id);
     this.$el.find(".image-info").attr("class", "image-info-active");
   },
   hideInfo: function(e) {
-    console.log("Left", this.model.id);
     this.$el.find(".image-info-active").attr("class", "image-info");
   },
   clicked: function(e) {
@@ -127,7 +126,7 @@ app.PhotoView = Backbone.View.extend({
     var searchTerm = e.currentTarget.innerHTML;
     commalessTerm = searchTerm.substr(0, searchTerm.length - 1);
     $("#searchinput").val(commalessTerm);
-    app.Search(commalessTerm);
+    Backbone.trigger('searchChanged', commalessTerm);
   },
   render: function() {
     this.$el.append(this.template(this.model.toJSON()));
@@ -150,6 +149,8 @@ app.FeedView = Backbone.View.extend({
     this.photos.isLoading = true;
     this.photos.fetch();
     this.listenTo(this.photos, 'sync', this.loadPhotos);
+    // Listen out for tag clicks to search on
+    this.listenTo(Backbone, 'searchChanged', this.search);
     // Setting up scroll event
     $(document).on('scroll', _.bind(this.scroll, this));
   },
